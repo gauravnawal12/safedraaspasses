@@ -181,6 +181,10 @@ input:focus,select:focus{border-color:var(--night);outline:none}
 .kv span{color:var(--muted)}
 .kv .cash{color:var(--cash)}.kv .renu{color:var(--renu)}.kv .own{color:var(--own)}
 
+/* Server problem bar */
+.warnbar{background:#FDF2F1;color:var(--bad);border-bottom:1px solid #F3C9C5;padding:11px 16px;font-size:13.5px;line-height:1.45}
+.warnbar b{display:block;margin-top:4px;color:var(--ink);font-weight:600}
+
 /* Toast */
 #toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 70px);transform:translate(-50%,-12px);background:var(--night);color:#fff;padding:11px 16px;border-radius:12px;font-size:14px;max-width:calc(100% - 32px);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:40;text-align:center}
 #toast.show{opacity:1;transform:translate(-50%,0)}
@@ -223,6 +227,8 @@ const MODES = ['Cash', 'Renu UPI', 'Own UPI'];
 const MCLS = { 'Cash': 'cash', 'Renu UPI': 'renu', 'Own UPI': 'own' };
 const MSHORT = { 'Cash': 'Cash', 'Renu UPI': 'Renu UPI', 'Own UPI': 'Own UPI' };
 const POLL_MS = 5000;
+const API_V = '1.2';     // must match API_VERSION in Code.gs
+let issue = null;        // server-side problem shown as a red bar until fixed
 
 let API = '';
 let S = load();          // persisted: session, server snapshot, version, pending queue
@@ -367,7 +373,9 @@ async function api(action, extra = {}) {
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // no CORS preflight for Apps Script
       body: JSON.stringify({ action, auth, ...extra })
     });
-    return await res.json();
+    const text = await res.text();
+    try { return JSON.parse(text); }
+    catch (e) { const err = new Error(explainPage(text, res.status)); err.page = true; throw err; }
   } finally { clearTimeout(to); }
 }
 
@@ -378,6 +386,19 @@ function enqueue(ops) {
 
 let flushT = null, flushing = false, pulling = false;
 function scheduleFlush(ms = 200) { clearTimeout(flushT); flushT = setTimeout(flush, ms); }
+
+/* The Apps Script URL answered with a web page instead of data: explain why */
+function explainPage(t, status) {
+  if (/accounts\.google\.com|ServiceLogin|Sign in/i.test(t)) return 'The Google Sheet is refusing the app: the web app asks for a Google sign-in. Organiser: in Apps Script, Deploy → Manage deployments → edit → set "Execute as: Me" and "Who has access: Anyone" → Deploy.';
+  if (/authori[sz]ation is required|permission/i.test(t)) return 'The Google Sheet is refusing the app: the script needs permission. Organiser: open Apps Script, run setup() and approve all access, then deploy a new version.';
+  if (/Script function not found|doPost/i.test(t)) return 'The Apps Script code is not deployed. Organiser: paste Code.gs, save, then Deploy → Manage deployments → New version.';
+  return 'The Google Sheet sent an unexpected reply (HTTP ' + status + '). Organiser: check the web app URL in config.json.';
+}
+function setIssue(msg) { if (issue === msg) return; issue = msg; render(); }
+function checkApi(r) {
+  if (r && r.api !== API_V) setIssue('Changes are not reaching the Google Sheet: it is running an older version of the script. Organiser: in Apps Script, Deploy → Manage deployments → edit (pencil) → Version: New version → Deploy.');
+  else setIssue(null);
+}
 
 async function flush() {
   if (flushing || !S.queue.length || !S.session || !API) return;
@@ -398,10 +419,11 @@ async function flush() {
       const bad = (r.results || []).filter(x => !x.ok || x.warn).map(x => x.ok ? x.warn : x.msg);
       if (bad.length) toast(bad.length === 1 ? bad[0] : bad[0] + ` (and ${bad.length - 1} more)`, 'err', 6000);
       if (r.data && r.data.ok) { S.server = r.data; S.v = r.data.v; }
+      checkApi(r.data);
       save(); buildView(); render();
     } else if (r.error === 'AUTH') { flushing = false; return forceLogout(r.msg); }
-    else { retryIn = 5000; if (r.error !== 'BUSY') toast(r.msg || 'Could not save. Retrying.', 'err'); }
-  } catch (e) { net.ok = false; retryIn = 4000; }
+    else { retryIn = 8000; if (r.error !== 'BUSY') setIssue(r.msg || 'The Google Sheet did not accept the changes. Retrying.'); }
+  } catch (e) { if (e.page) { net.ok = true; retryIn = 15000; setIssue(e.message); } else { net.ok = false; retryIn = 4000; } }
   flushing = false; setSync();
   if (S.queue.length) scheduleFlush(retryIn);
 }
@@ -416,8 +438,9 @@ async function pull() {
       S.server = r; S.v = r.v;
       S.session.user = r.me;
       save(); buildView(); render();
+      checkApi(r);
     } else if (r.error === 'AUTH') { pulling = false; return forceLogout(r.msg); }
-  } catch (e) { net.ok = false; if (!V) render(); }
+  } catch (e) { if (e.page) setIssue(e.message); else net.ok = false; if (!V) render(); }
   pulling = false; setSync();
 }
 
@@ -429,7 +452,8 @@ async function poll() {
     const r = await api('getVersion');
     net.ok = true;
     if (r.ok && r.v !== S.v) await pull();
-  } catch (e) { net.ok = false; }
+    else if (r.ok && r.api !== API_V) checkApi(r);
+  } catch (e) { if (e.page) setIssue(e.message); else net.ok = false; }
   setSync();
 }
 
@@ -449,11 +473,11 @@ function render() {
   const caret = fid && typeof ae.selectionStart === 'number' ? ae.selectionStart : null;
 
   if (!S.session) { if (!$('#lform')) app.innerHTML = loginHTML(); return; }
-  if (!V) { app.innerHTML = `<div class="loading"><div><p>${net.ok ? 'Loading passes…' : 'Could not reach the server.'}</p>${net.ok ? '' : '<button class="ghost sm" data-act="retry" style="margin-top:12px">Try again</button>'}</div></div>`; return; }
+  if (!V) { app.innerHTML = `<div class="loading"><div><p>${issue ? esc(issue) : net.ok ? 'Loading passes…' : 'Could not reach the server.'}</p>${net.ok ? '' : '<button class="ghost sm" data-act="retry" style="margin-top:12px">Try again</button>'}</div></div>`; return; }
 
   const tabs = isAdmin() ? ['overview', 'passes', 'team', 'money'] : ['mine', 'summary'];
   if (!tabs.includes(ui.tab)) ui.tab = tabs[0];
-  app.innerHTML = headerHTML() + '<main>' + TAB[ui.tab]() + '</main>' + navHTML(tabs) + selBarHTML();
+  app.innerHTML = headerHTML() + (issue ? `<div class="warnbar" role="alert">${esc(issue)}${S.queue.length ? ` <b>${S.queue.length} change${S.queue.length > 1 ? 's are' : ' is'} waiting on this phone and will upload once this is fixed.</b>` : ''}</div>` : '') + '<main>' + TAB[ui.tab]() + '</main>' + navHTML(tabs) + selBarHTML();
 
   if (fid) {
     const el = document.getElementById(fid);
@@ -983,7 +1007,7 @@ async function doLogin(e) {
       return;
     }
     msg.textContent = r.msg || 'Could not log in.';
-  } catch (err) { msg.textContent = 'Could not reach the server. Check your internet and try again.'; }
+  } catch (err) { msg.textContent = err.page ? err.message : 'Could not reach the server. Check your internet and try again.'; }
   btn.disabled = false; btn.textContent = 'Log in';
 }
 
