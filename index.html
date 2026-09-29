@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1B1E4A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SR Passes">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Safed Raas 2.0 Passes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --night:#1B1E4A; --ink:#1B1E4A; --muted:#62668C; --bg:#F2F3F8; --paper:#FFFFFF; --line:#DDE0EC;
+  --gold:#F2A20C; --cash:#15805A; --renu:#4450D6; --own:#AE2A7A; --bad:#BF2F28;
+  color-scheme:light;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{font:15px/1.45 'DM Sans',system-ui,-apple-system,sans-serif;color:var(--ink);background:var(--bg);-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.6;cursor:default}
+:focus-visible{outline:2.5px solid var(--gold);outline-offset:2px}
+h1,h2,h3,.big,.evn,.tk .n{font-family:Sora,system-ui,sans-serif;letter-spacing:-.01em}
+h2{font-size:20px;font-weight:700}
+h3{font-size:15px;font-weight:600;margin-bottom:10px}
+.sub{color:var(--muted);font-size:13.5px}
+.err{color:var(--bad);font-size:14px;min-height:20px;margin-top:10px}
+
+/* Header */
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;background:var(--night);color:#fff;padding:calc(env(safe-area-inset-top) + 10px) 12px 12px 16px}
+.ev{flex:1;min-width:0}
+.evn{font-weight:700;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.evs{font-size:12.5px;opacity:.72}
+.sync{font-size:12px;padding:5px 11px 5px 23px;border-radius:99px;background:rgba(255,255,255,.1);position:relative;white-space:nowrap}
+.sync::before{content:'';position:absolute;left:10px;top:50%;width:7px;height:7px;margin-top:-3.5px;border-radius:50%;background:#43D99B}
+.sync.saving::before{background:var(--gold);animation:pulse 1s infinite}
+.sync.off::before{background:#9DA2C4}
+@keyframes pulse{50%{opacity:.25}}
+.icon{background:none;border:0;padding:8px;border-radius:10px;display:grid;place-items:center;color:inherit;line-height:0}
+.icon:hover{background:rgba(127,127,160,.14)}
+
+main{max-width:760px;margin:0 auto;padding:18px 16px calc(150px + env(safe-area-inset-bottom))}
+
+/* Bottom nav */
+nav.bot{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;justify-content:center;background:var(--paper);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav.bot button{flex:1;max-width:170px;background:none;border:0;padding:13px 4px 14px;font-size:13.5px;font-weight:500;color:var(--muted);position:relative}
+nav.bot button.on{color:var(--ink);font-weight:700}
+nav.bot button.on::after{content:'';position:absolute;top:-1px;left:28%;right:28%;height:3px;border-radius:0 0 3px 3px;background:var(--gold)}
+
+/* Hero numbers */
+.hero{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:2px 2px 14px}
+.big{font-size:46px;font-weight:700;line-height:1;letter-spacing:-.035em}
+.of{color:var(--muted);font-size:14px;margin-top:6px}
+.owe{text-align:right}
+.owe span{display:block;font-size:13px;color:var(--muted)}
+.owe b{font:700 23px Sora,sans-serif;letter-spacing:-.02em}
+.prog{height:6px;background:var(--line);border-radius:6px;overflow:hidden;margin-bottom:20px}
+.prog i{display:block;height:100%;background:var(--gold);transition:width .3s}
+
+/* Controls */
+.bar{display:flex;gap:8px;margin-bottom:10px}
+.bar > *{flex:1 1 0;min-width:0}
+input,select{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);font-size:16px}
+input:focus,select:focus{border-color:var(--night);outline:none}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.chip{border:1.5px solid var(--line);background:var(--paper);padding:6px 12px;border-radius:99px;font-size:13.5px;font-weight:500}
+.chip b{font-weight:700;margin-left:3px;opacity:.7}
+.chip.on{background:var(--night);color:#fff;border-color:var(--night)}
+.chip.on b{opacity:.85}
+.tools{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 14px;flex-wrap:wrap}
+.legend{display:flex;gap:12px;font-size:12.5px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:3px;flex:none}
+.dot.cash{background:var(--cash)}.dot.renu{background:var(--renu)}.dot.own{background:var(--own)}
+.sec-h{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+
+.primary{display:block;width:100%;border:0;border-radius:12px;background:var(--night);color:#fff;font-weight:700;padding:14px;font-size:15.5px;margin-top:20px}
+.primary.sm{display:inline-block;width:auto;padding:9px 14px;margin:0;font-size:14px;border-radius:10px}
+.ghost{display:block;width:100%;border:1.5px solid var(--line);background:var(--paper);border-radius:12px;padding:12px;font-weight:600;margin-top:10px;text-align:center;text-decoration:none;color:var(--ink)}
+.ghost.sm{display:inline-block;width:auto;padding:7px 12px;margin:0;font-size:13.5px;border-radius:10px}
+.danger{color:var(--bad)}
+.wa{background:#1FA855;border-color:#1FA855;color:#fff}
+
+/* Pass tiles: ticket stubs with side notches */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px}
+.tk{position:relative;height:66px;border:0;border-radius:9px;background:var(--paper);box-shadow:inset 0 0 0 1.5px var(--line);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0 10px;
+  -webkit-mask:radial-gradient(circle 6px at 0 50%,#0000 97%,#000) left/51% 100% no-repeat,radial-gradient(circle 6px at 100% 50%,#0000 97%,#000) right/51% 100% no-repeat;
+          mask:radial-gradient(circle 6px at 0 50%,#0000 97%,#000) left/51% 100% no-repeat,radial-gradient(circle 6px at 100% 50%,#0000 97%,#000) right/51% 100% no-repeat;
+  transition:transform .12s}
+.tk:active{transform:scale(.95)}
+.tk .n{font-weight:700;font-size:17px;line-height:1.1;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tk .l{font-size:11px;opacity:.78;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tk.cash,.tk.renu,.tk.own{color:#fff;box-shadow:none}
+.tk.cash{background:var(--cash)}.tk.renu{background:var(--renu)}.tk.own{background:var(--own)}
+.tk.pool{background:#E7E9F2;box-shadow:inset 0 0 0 1.5px #E7E9F2;color:var(--muted)}
+.tk.sel{box-shadow:inset 0 0 0 3px var(--gold);background:#FFF6E0}
+.tk.p::after{content:'';position:absolute;top:7px;right:12px;width:6px;height:6px;border-radius:50%;background:var(--gold);animation:pulse 1s infinite}
+
+/* Cards & lists */
+.card{background:var(--paper);border-radius:14px;padding:16px;margin-bottom:12px;border:1px solid var(--line)}
+.split{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--line);margin-bottom:12px}
+.split i{display:block;height:100%}
+.split i.cash{background:var(--cash)}.split i.renu{background:var(--renu)}.split i.own{background:var(--own)}
+.lr{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:10px;padding:5px 0;font-size:14.5px}
+.lr b{min-width:72px;text-align:right}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.facts div{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px}
+.facts b{display:block;font:700 18px Sora,sans-serif}
+.facts span{font-size:12.5px;color:var(--muted)}
+.tblw{overflow-x:auto;margin:0 -4px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px;white-space:nowrap}
+.tbl th{text-align:left;font-weight:500;color:var(--muted);font-size:12.5px;padding:0 4px 8px}
+.tbl td{padding:9px 4px;border-top:1px solid var(--line)}
+.tbl .r{text-align:right}
+.li{display:flex;align-items:center;gap:12px;width:100%;background:none;border:0;border-top:1px solid var(--line);padding:11px 0;text-align:left}
+.li:first-of-type{border-top:0}
+.li > div{flex:1;min-width:0}
+.li .sub{font-size:12.5px}
+.person{display:flex;align-items:center;gap:12px;width:100%;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:8px;text-align:left}
+.person > div:first-child{flex:1;min-width:0}
+.person .sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.person.inactive{opacity:.55}
+.pn{text-align:right}
+.pn b{display:block;font:700 16px Sora,sans-serif}
+.pn span{font-size:12px;color:var(--muted)}
+.tag{display:inline-block;font-size:11.5px;font-weight:600;background:#EEF0F8;color:var(--muted);padding:1px 7px;border-radius:6px;margin-left:6px;vertical-align:2px}
+.money{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:8px}
+.money .mh{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.money .mh b{font:700 17px Sora,sans-serif}
+.money .mh b.zero{color:var(--cash)}
+.money .md{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:6px}
+.empty{text-align:center;padding:40px 16px;color:var(--muted);background:var(--paper);border:1.5px dashed var(--line);border-radius:14px}
+.empty b{display:block;color:var(--ink);font-size:16px;margin-bottom:4px}
+
+/* Selection bar */
+.selbar{position:fixed;left:12px;right:12px;bottom:calc(60px + env(safe-area-inset-bottom));max-width:736px;margin:0 auto;background:var(--night);color:#fff;border-radius:14px;padding:9px 9px 9px 16px;display:flex;align-items:center;gap:8px;z-index:7;box-shadow:0 10px 28px rgba(27,30,74,.32)}
+.selbar b{flex:1;font-weight:600}
+.selbar button{border:0;border-radius:10px;padding:10px 16px;font-weight:700;background:var(--gold);color:var(--night)}
+.selbar button.alt{background:rgba(255,255,255,.14);color:#fff}
+
+/* Bottom sheet */
+#scrim{position:fixed;inset:0;background:rgba(18,20,52,.46);opacity:0;transition:opacity .2s;z-index:20}
+#scrim.open{opacity:1}
+#sheet{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:560px;max-height:92vh;overflow-y:auto;background:var(--paper);border-radius:20px 20px 0 0;padding:8px 20px calc(24px + env(safe-area-inset-bottom));z-index:21;transform:translateY(100%);transition:transform .22s ease-out;overscroll-behavior:contain}
+#sheet.open{transform:none}
+.grab{width:40px;height:4px;border-radius:4px;background:var(--line);margin:4px auto 12px}
+.sh-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:2px}
+.sh-h h2{font-size:23px}
+.lbl{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:16px 0 6px}
+.lbl i{font-style:normal;font-weight:400}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mode{--c:var(--ink);border:2px solid color-mix(in srgb,var(--c) 30%,white);background:var(--paper);color:var(--c);border-radius:12px;padding:15px 4px;font-weight:700;font-size:14.5px}
+.mode.cash{--c:var(--cash)}.mode.renu{--c:var(--renu)}.mode.own{--c:var(--own)}
+.mode.on{background:var(--c);border-color:var(--c);color:#fff}
+.row{display:flex;gap:8px}
+.row > select{flex:1}
+.row > button{margin:0;width:auto;flex:none;padding:0 18px}
+.check{display:flex;align-items:center;gap:10px;margin-top:16px;font-weight:500}
+.check input{width:20px;height:20px}
+.divd{height:1px;background:var(--line);margin:24px 0 18px}
+.done{text-align:center;padding:10px 0 4px}
+.done .tick{width:56px;height:56px;border-radius:50%;background:var(--cash);color:#fff;display:grid;place-items:center;margin:4px auto 12px}
+
+/* Toast */
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 70px);transform:translate(-50%,-12px);background:var(--night);color:#fff;padding:11px 16px;border-radius:12px;font-size:14px;max-width:calc(100% - 32px);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:40;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#toast.err{background:var(--bad)}
+
+/* Login */
+.login{min-height:100vh;background:var(--night);color:#fff;display:flex;flex-direction:column;justify-content:flex-end;padding:calc(env(safe-area-inset-top) + 28px) 0 0}
+.lg-top{padding:0 24px 32px;max-width:520px;width:100%;margin:0 auto}
+.stubs{display:flex;gap:7px;margin-bottom:26px}
+.stubs i{width:44px;height:30px;border-radius:5px;background:rgba(255,255,255,.12);-webkit-mask:radial-gradient(circle 4px at 0 50%,#0000 97%,#000) left/51% 100% no-repeat,radial-gradient(circle 4px at 100% 50%,#0000 97%,#000) right/51% 100% no-repeat;mask:radial-gradient(circle 4px at 0 50%,#0000 97%,#000) left/51% 100% no-repeat,radial-gradient(circle 4px at 100% 50%,#0000 97%,#000) right/51% 100% no-repeat}
+.stubs i:nth-child(3){background:var(--gold)}
+.lg-top h1{font-size:clamp(40px,11vw,60px);line-height:.98;font-weight:700;letter-spacing:-.04em}
+.lg-top p{opacity:.72;margin-top:10px;font-size:15.5px}
+.lg-card{background:var(--paper);color:var(--ink);border-radius:22px 22px 0 0;padding:10px 24px calc(28px + env(safe-area-inset-bottom));max-width:520px;width:100%;margin:0 auto}
+.loading{min-height:70vh;display:grid;place-items:center;text-align:center;color:var(--muted)}
+
+@media (min-width:560px){ .login{justify-content:center;padding:40px 0} .lg-card{border-radius:22px} }
+@media (prefers-reduced-motion:reduce){ *,*::before,*::after{transition:none!important;animation:none!important} }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="scrim" hidden></div>
+<div id="sheet" role="dialog" aria-modal="true" aria-label="Details" hidden></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+/* ══════════════════════════════════════════════════════════════
+   Safed Raas 2.0 — Pass Tracker PWA
+   Same pattern as the Finance Manager: single index.html + config.json,
+   Apps Script backend, Google Sheets store.
+   Sync: local-first ops queue → debounced POST → server applies per row
+   under a lock. Smart polling on a cheap getVersion every 5 s; full data
+   is fetched only when the version changes.
+   ══════════════════════════════════════════════════════════════ */
+
+const LS = 'srpass_v1';
+const MODES = ['Cash', 'Renu UPI', 'Own UPI'];
+const MCLS = { 'Cash': 'cash', 'Renu UPI': 'renu', 'Own UPI': 'own' };
+const MSHORT = { 'Cash': 'Cash', 'Renu UPI': 'Renu UPI', 'Own UPI': 'Own UPI' };
+const POLL_MS = 5000;
+
+let API = '';
+let S = load();          // persisted: session, server snapshot, version, pending queue
+let V = null;            // view = server snapshot + pending queue replayed
+let SH = {};             // current bottom-sheet state
+const net = { ok: navigator.onLine };
+const ui = { tab: null, filter: 'unsold', q: '', seller: '', selecting: false, sel: new Set() };
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const rs = n => '₹' + Math.round(n || 0).toLocaleString('en-IN');
+const natCmp = (a, b) => String(a).localeCompare(String(b), undefined, { numeric: true });
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const isAdmin = () => S.session?.user?.role === 'admin';
+const byNo = no => V.passes.find(p => p.no === String(no));
+const nm = id => { const t = V.team.find(x => x.id === id); return t ? t.name : (id ? 'Unknown' : 'Pool'); };
+const first = s => String(s || '').split(' ')[0];
+const settleOf = id => V.settle.filter(s => s.sid === id);
+const fmtTime = t => t ? new Date(t).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }) : '';
+
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(LS));
+    if (s && typeof s === 'object') return { session: s.session || null, server: s.server || null, v: s.v || null, queue: s.queue || [] };
+  } catch (e) {}
+  return { session: null, server: null, v: null, queue: [] };
+}
+function save() { try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {} }
+
+/* ── Pass number helpers ─────────────────────────────── */
+function parseRange(txt) {
+  const out = [];
+  const parts = String(txt || '').replace(/\s*[-–]\s*/g, '-').split(/[,\s]+/);
+  for (const part of parts) {
+    if (!part) continue;
+    const m = part.match(/^([A-Za-z]*)(\d+)-([A-Za-z]*)(\d+)$/);
+    if (m) {
+      let a = +m[2], b = +m[4];
+      if (b < a) [a, b] = [b, a];
+      if (b - a > 2000) throw new Error('A range can have at most 2,000 passes');
+      const pad = m[2].startsWith('0') ? m[2].length : 0;
+      for (let i = a; i <= b; i++) out.push(m[1] + (pad ? String(i).padStart(pad, '0') : i));
+    } else out.push(part);
+  }
+  return [...new Set(out)];
+}
+function compress(nos) {
+  const s = [...nos].sort(natCmp), g = [];
+  for (const n of s) {
+    const last = g[g.length - 1];
+    if (last && /^\d+$/.test(n) && /^\d+$/.test(last[1]) && +n === +last[1] + 1) last[1] = n;
+    else g.push([n, n]);
+  }
+  return g.map(([a, b]) => a === b ? a : a + '–' + b).join(', ');
+}
+function statsFor(passes, settle) {
+  const s = { assigned: 0, sold: 0, cash: 0, renu: 0, own: 0, settled: 0, n: { 'Cash': 0, 'Renu UPI': 0, 'Own UPI': 0 } };
+  passes.forEach(p => {
+    if (p.sid) s.assigned++;
+    if (p.st === 'sold') {
+      s.sold++; s.n[p.m] = (s.n[p.m] || 0) + 1;
+      if (p.m === 'Cash') s.cash += p.a; else if (p.m === 'Renu UPI') s.renu += p.a; else if (p.m === 'Own UPI') s.own += p.a;
+    }
+  });
+  settle.forEach(x => s.settled += x.amt);
+  s.total = s.cash + s.renu + s.own;
+  s.collect = s.cash + s.own - s.settled;   // Renu UPI lands directly with Renu
+  return s;
+}
+
+/* ── Local-first view: server snapshot + queued ops ───── */
+function buildView() {
+  if (!S.server) { V = null; return; }
+  const d = JSON.parse(JSON.stringify(S.server));
+  d.settle = d.settle || []; d.team = d.team || []; d.passes = d.passes || [];
+  const pi = {};
+  d.passes.forEach(p => pi[p.no] = p);
+  for (const op of S.queue) applyLocal(d, pi, op);
+  d.passes.sort((a, b) => natCmp(a.no, b.no));
+  V = d;
+}
+function applyLocal(d, pi, op) {
+  const me = d.me;
+  switch (op.type) {
+    case 'sell': case 'edit': {
+      const p = pi[op.no]; if (!p) return;
+      if (op.type === 'sell' && p.st === 'sold') return;
+      if (!p.sid) p.sid = me.id;
+      Object.assign(p, { st: 'sold', m: op.mode, a: +op.amount || 0, b: op.buyer || '', bp: op.phone || '', u: op.ts, ub: me.name, _p: 1 });
+      if (op.type === 'sell') p.t = op.ts;
+      break;
+    }
+    case 'unsell': {
+      const p = pi[op.no]; if (!p) return;
+      Object.assign(p, { st: 'unsold', m: '', a: 0, b: '', bp: '', t: 0, _p: 1 });
+      break;
+    }
+    case 'assign':
+      for (const no of op.nos) {
+        const p = pi[no];
+        if (!p) { const n = { no, sid: op.sid, st: 'unsold', m: '', a: 0, b: '', bp: '', t: 0, u: op.ts, ub: me.name, _p: 1 }; d.passes.push(n); pi[no] = n; }
+        else if (!(p.st === 'sold' && p.sid !== op.sid)) { p.sid = op.sid; p._p = 1; }
+      }
+      break;
+    case 'unassign':
+      op.nos.forEach(no => { const p = pi[no]; if (p && p.st !== 'sold') { p.sid = ''; p._p = 1; } });
+      break;
+    case 'remove': {
+      const rm = new Set(op.nos.filter(n => pi[n] && pi[n].st !== 'sold'));
+      d.passes = d.passes.filter(p => !rm.has(p.no));
+      rm.forEach(n => delete pi[n]);
+      break;
+    }
+    case 'seller': {
+      const x = d.team.find(t => t.id === op.p.id);
+      if (x) Object.assign(x, op.p); else d.team.push({ ...op.p });
+      break;
+    }
+    case 'settle':
+      if (!d.settle.some(s => s.id === op.id)) d.settle.push({ id: op.id, sid: op.sid, amt: +op.amt || 0, note: op.note || '', d: op.ts, by: me.name, _p: 1 });
+      break;
+    case 'unsettle':
+      d.settle = d.settle.filter(s => s.id !== op.id);
+      break;
+    case 'config':
+      Object.assign(d.cfg, op.cfg);
+      if (op.cfg.price !== undefined) d.cfg.price = +op.cfg.price || 0;
+      break;
+  }
+}
+
+/* ── Network ─────────────────────────────────────────── */
+async function api(action, extra = {}) {
+  const ctrl = new AbortController(), to = setTimeout(() => ctrl.abort(), 30000);
+  try {
+    const auth = S.session ? { phone: S.session.phone, pin: S.session.pin } : null;
+    const res = await fetch(API, {
+      method: 'POST', redirect: 'follow', signal: ctrl.signal,
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },   // no CORS preflight for Apps Script
+      body: JSON.stringify({ action, auth, ...extra })
+    });
+    return await res.json();
+  } finally { clearTimeout(to); }
+}
+
+function enqueue(ops) {
+  (Array.isArray(ops) ? ops : [ops]).forEach(op => { op.opId = uid(); op.ts = Date.now(); S.queue.push(op); });
+  save(); buildView(); render(); scheduleFlush(150);
+}
+
+let flushT = null, flushing = false, pulling = false;
+function scheduleFlush(ms = 200) { clearTimeout(flushT); flushT = setTimeout(flush, ms); }
+
+async function flush() {
+  if (flushing || !S.queue.length || !S.session || !API) return;
+  flushing = true; setSync();
+  const batch = S.queue.slice(0, 40);
+  let retryIn = 300;
+  try {
+    const r = await api('ops', { ops: batch });
+    net.ok = true;
+    if (r.ok) {
+      const ids = new Set(batch.map(o => o.opId));
+      S.queue = S.queue.filter(o => !ids.has(o.opId));
+      const bad = (r.results || []).filter(x => !x.ok);
+      if (bad.length) toast(bad.length === 1 ? bad[0].msg : bad[0].msg + ` (and ${bad.length - 1} more)`, 'err', 5000);
+      if (r.data && r.data.ok) { S.server = r.data; S.v = r.data.v; }
+      save(); buildView(); render();
+    } else if (r.error === 'AUTH') { flushing = false; return forceLogout(r.msg); }
+    else { retryIn = 5000; if (r.error !== 'BUSY') toast(r.msg || 'Could not save. Retrying.', 'err'); }
+  } catch (e) { net.ok = false; retryIn = 4000; }
+  flushing = false; setSync();
+  if (S.queue.length) scheduleFlush(retryIn);
+}
+
+async function pull() {
+  if (pulling || !S.session || !API) return;
+  pulling = true;
+  try {
+    const r = await api('getData');
+    net.ok = true;
+    if (r.ok) {
+      S.server = r; S.v = r.v;
+      S.session.user = r.me;
+      save(); buildView(); render();
+    } else if (r.error === 'AUTH') { pulling = false; return forceLogout(r.msg); }
+  } catch (e) { net.ok = false; if (!V) render(); }
+  pulling = false; setSync();
+}
+
+async function poll() {
+  if (!S.session || document.hidden || !API) return;
+  if (S.queue.length) { flush(); return; }
+  if (pulling || flushing) return;
+  try {
+    const r = await api('getVersion');
+    net.ok = true;
+    if (r.ok && r.v !== S.v) await pull();
+  } catch (e) { net.ok = false; }
+  setSync();
+}
+
+function syncState() { if (!navigator.onLine || !net.ok) return 'off'; return S.queue.length ? 'saving' : 'live'; }
+function syncText() {
+  const n = S.queue.length, s = syncState();
+  if (s === 'off') return n ? `Offline, ${n} waiting` : 'Offline';
+  return s === 'saving' ? `Saving ${n}` : 'Live';
+}
+function setSync() { const el = $('#syncpill'); if (el) { el.className = 'sync ' + syncState(); el.textContent = syncText(); } }
+
+/* ── Rendering ───────────────────────────────────────── */
+function render() {
+  const app = $('#app');
+  const ae = document.activeElement;
+  const fid = ae && ae.id && app.contains(ae) ? ae.id : null;
+  const caret = fid && typeof ae.selectionStart === 'number' ? ae.selectionStart : null;
+
+  if (!S.session) { if (!$('#lform')) app.innerHTML = loginHTML(); return; }
+  if (!V) { app.innerHTML = `<div class="loading"><div><p>${net.ok ? 'Loading passes…' : 'Could not reach the server.'}</p>${net.ok ? '' : '<button class="ghost sm" data-act="retry" style="margin-top:12px">Try again</button>'}</div></div>`; return; }
+
+  const tabs = isAdmin() ? ['overview', 'passes', 'team', 'money'] : ['mine', 'summary'];
+  if (!tabs.includes(ui.tab)) ui.tab = tabs[0];
+  app.innerHTML = headerHTML() + '<main>' + TAB[ui.tab]() + '</main>' + navHTML(tabs) + selBarHTML();
+
+  if (fid) {
+    const el = document.getElementById(fid);
+    if (el) { el.focus({ preventScroll: true }); if (caret !== null) try { el.setSelectionRange(caret, caret); } catch (e) {} }
+  }
+}
+
+function headerHTML() {
+  return `<header class="top">
+    <div class="ev"><div class="evn">${esc(V.cfg.eventName)}</div><div class="evs">${esc(V.me.name)}${isAdmin() ? ', organiser' : ''}</div></div>
+    <div class="sync ${syncState()}" id="syncpill">${syncText()}</div>
+    <button class="icon" data-act="logout" aria-label="Log out" title="Log out">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+    </button>
+  </header>`;
+}
+const TAB_NAMES = { overview: 'Overview', passes: 'Passes', team: 'Team', money: 'Money', mine: 'My passes', summary: 'Summary' };
+function navHTML(tabs) {
+  return `<nav class="bot">${tabs.map(t => `<button class="${ui.tab === t ? 'on' : ''}" data-act="tab" data-v="${t}" ${ui.tab === t ? 'aria-current="page"' : ''}>${TAB_NAMES[t]}</button>`).join('')}</nav>`;
+}
+function selBarHTML() {
+  if (!ui.selecting) return '';
+  const n = ui.sel.size;
+  return `<div class="selbar"><b>${n ? n + ' selected' : 'Tap passes to select'}</b>
+    ${n && isAdmin() ? '<button class="alt" data-act="assignsel">Give</button>' : ''}
+    ${n ? '<button data-act="sellsel">Sell</button>' : ''}</div>`;
+}
+
+function tileHTML(p) {
+  let cls, lbl;
+  if (p.st === 'sold') { cls = MCLS[p.m] || 'cash'; lbl = MSHORT[p.m] || p.m; }
+  else if (!p.sid) { cls = 'pool'; lbl = 'Pool'; }
+  else { cls = ''; lbl = isAdmin() && p.sid !== V.me.id ? first(nm(p.sid)) : 'Unsold'; }
+  if (ui.sel.has(p.no)) cls += ' sel';
+  if (p._p) cls += ' p';
+  const aria = `Pass ${p.no}, ${p.st === 'sold' ? 'sold by ' + p.m : (p.sid ? 'unsold' : 'in pool')}`;
+  return `<button class="tk ${cls}" data-no="${esc(p.no)}" aria-label="${esc(aria)}"><span class="n">${esc(p.no)}</span><span class="l">${esc(lbl)}</span></button>`;
+}
+function filterList(list) {
+  const q = ui.q.trim().toLowerCase();
+  return list.filter(p => {
+    if (ui.filter === 'unsold' && !(p.st !== 'sold' && p.sid)) return false;
+    if (ui.filter === 'sold' && p.st !== 'sold') return false;
+    if (ui.filter === 'pool' && p.sid) return false;
+    if (ui.seller && p.sid !== ui.seller) return false;
+    if (q && !p.no.toLowerCase().includes(q) && !p.b.toLowerCase().includes(q) && !p.bp.includes(q)) return false;
+    return true;
+  });
+}
+function chipsHTML(list, keys) {
+  const cnt = {
+    unsold: list.filter(p => p.st !== 'sold' && p.sid).length,
+    sold: list.filter(p => p.st === 'sold').length,
+    all: list.length,
+    pool: list.filter(p => !p.sid).length
+  };
+  const L = { unsold: 'Unsold', sold: 'Sold', all: 'All', pool: 'Pool' };
+  return `<div class="chips" role="group" aria-label="Filter">${keys.map(k => `<button class="chip ${ui.filter === k ? 'on' : ''}" data-act="filter" data-v="${k}" aria-pressed="${ui.filter === k}">${L[k]}<b>${cnt[k]}</b></button>`).join('')}</div>`;
+}
+function toolsHTML() {
+  return `<div class="tools"><div class="legend"><span><i class="dot cash"></i>Cash</span><span><i class="dot renu"></i>Renu UPI</span><span><i class="dot own"></i>Own UPI</span></div>
+    <button class="ghost sm" data-act="selmode">${ui.selecting ? 'Stop selecting' : 'Select several'}</button></div>`;
+}
+function gridOrEmpty(list, emptyTitle, emptyText) {
+  return list.length ? `<div class="grid">${list.map(tileHTML).join('')}</div>` : `<div class="empty"><b>${emptyTitle}</b>${emptyText}</div>`;
+}
+function splitHTML(st) {
+  const T = st.total || 1;
+  const segs = [['Cash', st.cash, 'cash'], ['Renu UPI', st.renu, 'renu'], ['Own UPI', st.own, 'own']];
+  return `<div class="split">${segs.map(s => `<i class="${s[2]}" style="width:${s[1] / T * 100}%"></i>`).join('')}</div>
+    ${segs.map(s => `<div class="lr"><span class="dot ${s[2]}"></span><span>${s[0]}</span><span class="sub">${st.n[s[0]] || 0} pass${(st.n[s[0]] || 0) === 1 ? '' : 'es'}</span><b>${rs(s[1])}</b></div>`).join('')}`;
+}
+function saleRow(p) {
+  return `<button class="li" data-act="openpass" data-no="${esc(p.no)}"><span class="dot ${MCLS[p.m]}"></span>
+    <div><b>Pass ${esc(p.no)}</b>${p.b ? ', ' + esc(p.b) : ''}<div class="sub">${isAdmin() ? esc(nm(p.sid)) + ', ' : ''}${esc(p.m)}, ${fmtTime(p.t)}</div></div><b>${rs(p.a)}</b></button>`;
+}
+
+const TAB = {
+  /* Seller: my passes */
+  mine() {
+    const mine = V.passes;
+    const st = statsFor(mine, V.settle);
+    const pct = st.assigned ? Math.round(st.sold / st.assigned * 100) : 0;
+    if (ui.filter === 'pool') ui.filter = 'unsold';
+    return `<section class="hero"><div><div class="big">${st.sold}</div><div class="of">of ${st.assigned} passes sold</div></div>
+      <div class="owe"><span>To hand over</span><b>${rs(st.collect)}</b></div></section>
+      <div class="prog"><i style="width:${pct}%"></i></div>
+      <div class="bar"><input id="q" type="search" inputmode="search" placeholder="Find a pass no. or buyer" value="${esc(ui.q)}" aria-label="Search passes"></div>
+      ${chipsHTML(mine, ['unsold', 'sold', 'all'])}
+      ${toolsHTML()}
+      ${mine.length ? gridOrEmpty(filterList(mine), 'Nothing here', 'No passes match this filter.')
+        : `<div class="empty"><b>No passes given to you yet</b>Ask the organiser to assign your pass numbers. They show up here right away.</div>`}`;
+  },
+
+  /* Seller: summary */
+  summary() {
+    const st = statsFor(V.passes, V.settle);
+    const se = [...V.settle].sort((a, b) => b.d - a.d);
+    const board = [...(V.board || [])].sort((a, b) => b.sold - a.sold);
+    return `<section class="hero"><div><div class="of" style="margin:0 0 6px">To hand over</div><div class="big">${rs(st.collect)}</div></div></section>
+      <p class="sub" style="margin-bottom:16px">Cash and Own UPI you collected (${rs(st.cash + st.own)}) minus what you have handed over (${rs(st.settled)}). Renu UPI payments reach Renu directly, so they are not counted here.</p>
+      <div class="card"><h3>My sales, ${rs(st.total)}</h3>${splitHTML(st)}</div>
+      <div class="card"><h3>Handed over</h3>${se.length ? se.map(s => `<div class="li"><div><b>${rs(s.amt)}</b>${s.note ? ', ' + esc(s.note) : ''}<div class="sub">${fmtTime(s.d)}, recorded by ${esc(s.by)}</div></div></div>`).join('')
+        : '<p class="sub">Nothing recorded yet. The organiser records it when you hand over cash or Own UPI money.</p>'}</div>
+      ${board.length ? `<div class="card"><h3>Team progress</h3>${board.map((b, i) => `<div class="li"><div>${i + 1}. ${b.id === V.me.id ? '<b>' + esc(b.name) + '</b>' : esc(b.name)}</div><span class="sub">${b.sold} of ${b.assigned}</span></div>`).join('')}</div>` : ''}`;
+  },
+
+  /* Organiser: overview */
+  overview() {
+    const all = V.passes, st = statsFor(all, V.settle);
+    const total = all.length, pool = all.filter(p => !p.sid).length;
+    const pct = total ? Math.round(st.sold / total * 100) : 0;
+    const people = V.team.map(t => ({ t, s: statsFor(all.filter(p => p.sid === t.id), settleOf(t.id)) }))
+      .filter(x => x.s.assigned || x.s.settled).sort((a, b) => b.s.sold - a.s.sold);
+    const recent = all.filter(p => p.st === 'sold').sort((a, b) => b.t - a.t).slice(0, 8);
+    if (!total) return `<div class="empty"><b>No passes yet</b>Go to Passes and enter your pass numbers, then give them to the team.</div>
+      <button class="ghost" data-act="settings">Event settings</button>`;
+    return `<section class="hero"><div><div class="big">${st.sold}</div><div class="of">of ${total} passes sold</div></div>
+      <div class="owe"><span>Collected</span><b>${rs(st.total)}</b></div></section>
+      <div class="prog"><i style="width:${pct}%"></i></div>
+      <div class="facts">
+        <div><b>${rs(st.collect)}</b><span>Still with the team</span></div>
+        <div><b>${total - pool - st.sold}</b><span>Unsold with the team</span></div>
+        <div><b>${pool}</b><span>Not given out yet</span></div>
+      </div>
+      <div class="card"><h3>How the money came in</h3>${splitHTML(st)}</div>
+      <div class="card"><h3>By person</h3>${people.length ? `<div class="tblw"><table class="tbl"><thead><tr><th>Name</th><th class="r">Sold</th><th class="r">Collected</th><th class="r">To hand over</th></tr></thead><tbody>
+        ${people.map(x => `<tr><td>${esc(x.t.name)}</td><td class="r">${x.s.sold} / ${x.s.assigned}</td><td class="r">${rs(x.s.total)}</td><td class="r">${rs(x.s.collect)}</td></tr>`).join('')}
+        </tbody></table></div>` : '<p class="sub">No passes given to anyone yet.</p>'}</div>
+      <div class="card"><h3>Latest sales</h3>${recent.length ? recent.map(saleRow).join('') : '<p class="sub">No passes sold yet. Sales appear here as soon as anyone marks a pass sold.</p>'}</div>
+      <button class="ghost" data-act="export">Download all passes (CSV)</button>
+      <button class="ghost" data-act="settings">Event settings</button>`;
+  },
+
+  /* Organiser: all passes */
+  passes() {
+    const opts = V.team.filter(t => V.passes.some(p => p.sid === t.id)).sort((a, b) => a.name.localeCompare(b.name));
+    if (ui.seller && !opts.some(t => t.id === ui.seller)) ui.seller = '';
+    const base = ui.seller ? V.passes.filter(p => p.sid === ui.seller) : V.passes;
+    return `<div class="sec-h"><h2>Passes</h2><button class="primary sm" data-act="addpasses">Add or give passes</button></div>
+      <div class="bar"><input id="q" type="search" placeholder="Pass no. or buyer" value="${esc(ui.q)}" aria-label="Search passes">
+        <select id="fseller" aria-label="Filter by person"><option value="">Everyone</option>${opts.map(t => `<option value="${esc(t.id)}" ${ui.seller === t.id ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}</select></div>
+      ${chipsHTML(base, ['all', 'unsold', 'sold', 'pool'])}
+      ${toolsHTML()}
+      ${V.passes.length ? gridOrEmpty(filterList(V.passes), 'Nothing here', 'No passes match this filter.')
+        : '<div class="empty"><b>No passes yet</b>Tap Add or give passes and enter your pass numbers, for example 1001-1600.</div>'}`;
+  },
+
+  /* Organiser: team */
+  team() {
+    const rows = [...V.team].sort((a, b) => (b.active - a.active) || a.name.localeCompare(b.name)).map(t => {
+      const ps = V.passes.filter(p => p.sid === t.id), st = statsFor(ps, settleOf(t.id));
+      return `<button class="person ${t.active ? '' : 'inactive'}" data-act="person" data-id="${esc(t.id)}">
+        <div><b>${esc(t.name)}</b>${t.role === 'admin' ? '<span class="tag">Organiser</span>' : ''}${t.active ? '' : '<span class="tag">Inactive</span>'}
+        <div class="sub">${ps.length ? esc(compress(ps.map(p => p.no))) : 'No passes yet'}</div></div>
+        <div class="pn"><b>${st.sold}/${st.assigned}</b><span>sold</span></div></button>`;
+    }).join('');
+    return `<div class="sec-h"><h2>Team</h2><button class="primary sm" data-act="person" data-id="">Add person</button></div>${rows}`;
+  },
+
+  /* Organiser: money */
+  money() {
+    const all = statsFor(V.passes, V.settle);
+    const people = V.team.map(t => ({ t, s: statsFor(V.passes.filter(p => p.sid === t.id), settleOf(t.id)) }))
+      .filter(x => x.s.cash + x.s.own + x.s.settled > 0).sort((a, b) => b.s.collect - a.s.collect);
+    const se = [...V.settle].sort((a, b) => b.d - a.d);
+    return `<section class="hero"><div><div class="of" style="margin:0 0 6px">Still with the team</div><div class="big">${rs(all.collect)}</div></div>
+      <div class="owe"><span>Received on Renu UPI</span><b>${rs(all.renu)}</b></div></section>
+      <p class="sub" style="margin-bottom:16px">Cash and Own UPI collections stay with each seller until you record a handover. Renu UPI needs no handover.</p>
+      ${people.length ? people.map(x => `<div class="money">
+        <div class="mh"><span>${esc(x.t.name)}</span><b class="${x.s.collect <= 0 ? 'zero' : ''}">${x.s.collect <= 0 ? 'Settled' : rs(x.s.collect)}</b></div>
+        <div class="md"><span class="sub">Cash ${rs(x.s.cash)}, Own UPI ${rs(x.s.own)}, handed over ${rs(x.s.settled)}</span>
+        <button class="ghost sm" data-act="handover" data-id="${esc(x.t.id)}">Record handover</button></div></div>`).join('')
+        : '<div class="empty"><b>No cash or Own UPI sales yet</b>Balances per seller appear here once passes are sold.</div>'}
+      ${se.length ? `<div class="card" style="margin-top:16px"><h3>Handovers</h3>${se.map(s => `<div class="li"><div><b>${esc(nm(s.sid))}</b>, ${rs(s.amt)}${s.note ? ', ' + esc(s.note) : ''}<div class="sub">${fmtTime(s.d)}, recorded by ${esc(s.by)}</div></div>
+        <button class="icon danger" data-act="unsettle" data-id="${esc(s.id)}" aria-label="Delete this handover"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button></div>`).join('')}</div>` : ''}`;
+  }
+};
+
+function loginHTML() {
+  const name = S.server?.cfg?.eventName || 'Safed Raas 2.0';
+  return `<div class="login"><div class="lg-top"><div class="stubs" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+    <h1>${esc(name)}</h1><p>Pass tracker for the JRT 273 team</p></div>
+    <form id="lform" class="lg-card" novalidate>
+      <label class="lbl" for="l_phone">Phone number</label><input id="l_phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="10-digit mobile">
+      <label class="lbl" for="l_pin">PIN</label><input id="l_pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="4 to 6 digits">
+      <button class="primary" id="l_btn" type="submit">Log in</button>
+      <p class="err" id="l_msg" role="alert"></p>
+      <p class="sub">No PIN yet? Ask the organiser to add you to the team.</p>
+    </form></div>`;
+}
+
+/* ── Bottom sheet ────────────────────────────────────── */
+let sheetT = null;
+function openSheet(h) {
+  clearTimeout(sheetT);
+  const s = $('#sheet'), sc = $('#scrim');
+  s.innerHTML = '<div class="grab"></div>' + h;
+  s.hidden = false; sc.hidden = false; s.scrollTop = 0;
+  requestAnimationFrame(() => requestAnimationFrame(() => { s.classList.add('open'); sc.classList.add('open'); }));
+}
+function closeSheet() {
+  const s = $('#sheet'), sc = $('#scrim');
+  s.classList.remove('open'); sc.classList.remove('open');
+  sheetT = setTimeout(() => { s.hidden = true; sc.hidden = true; s.innerHTML = ''; }, 220);
+}
+const sheetHead = title => `<div class="sh-h"><h2>${title}</h2><button class="icon" data-act="close" aria-label="Close"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>`;
+function personOptions(sel) {
+  return `<option value="" ${!sel ? 'selected' : ''}>Pool (not given to anyone)</option>` +
+    V.team.filter(t => t.active).sort((a, b) => a.name.localeCompare(b.name)).map(t => `<option value="${esc(t.id)}" ${sel === t.id ? 'selected' : ''}>${esc(t.name)}</option>`).join('');
+}
+
+function openSale(nos) {
+  const ps = nos.map(byNo).filter(Boolean);
+  if (!ps.length) return;
+  const p = ps[0], sold = ps.length === 1 && p.st === 'sold';
+  SH = { kind: 'sale', nos: ps.map(x => x.no), mode: sold ? p.m : '', sold };
+  let h = sheetHead(ps.length === 1 ? 'Pass ' + esc(p.no) : ps.length + ' passes');
+  if (ps.length > 1) h += `<p class="sub">${esc(compress(SH.nos))}</p>`;
+  else if (isAdmin()) h += `<p class="sub">${p.sid ? 'With ' + esc(nm(p.sid)) : 'In the pool, not given to anyone'}</p>`;
+  if (sold) h += `<p class="sub">Sold ${fmtTime(p.t)}${p.ub ? ', last updated by ' + esc(p.ub) : ''}</p>`;
+  h += `<div class="lbl">Payment received by</div>
+    <div class="modes">${MODES.map(m => `<button class="mode ${MCLS[m]} ${SH.mode === m ? 'on' : ''}" data-mode="${m}" aria-pressed="${SH.mode === m}">${m}</button>`).join('')}</div>
+    <label class="lbl" for="f_amt">Amount ${ps.length > 1 ? 'per pass' : ''}</label><input id="f_amt" type="number" inputmode="numeric" min="0" value="${sold ? p.a : V.cfg.price}">
+    <label class="lbl" for="f_buyer">Buyer name <i>(optional)</i></label><input id="f_buyer" autocomplete="off" value="${sold ? esc(p.b) : ''}">
+    <label class="lbl" for="f_bphone">Buyer phone <i>(optional, for a WhatsApp confirmation)</i></label><input id="f_bphone" type="tel" inputmode="tel" autocomplete="off" value="${sold ? esc(p.bp) : ''}">
+    <button class="primary" data-act="savesale">${sold ? 'Save changes' : ps.length > 1 ? `Mark ${ps.length} passes sold` : 'Mark as sold'}</button>`;
+  if (sold) {
+    if (waLink(p.bp)) h += `<a class="ghost wa" target="_blank" rel="noopener" href="${waLink(p.bp, waMsg([p.no], p.b))}">Send confirmation on WhatsApp</a>`;
+    h += `<button class="ghost danger" data-act="unsell">Mark unsold</button>`;
+  }
+  if (isAdmin() && !sold && ps.length === 1) {
+    h += `<div class="divd"></div><label class="lbl" for="f_to" style="margin-top:0">Give this pass to</label>
+      <div class="row"><select id="f_to">${personOptions(p.sid)}</select><button class="ghost" data-act="assignone">Move</button></div>
+      <button class="ghost danger" data-act="removeone">Delete this pass</button>`;
+  }
+  openSheet(h);
+}
+
+function waLink(phone, text) {
+  let d = String(phone || '').replace(/\D/g, '');
+  if (d.length === 10) d = '91' + d;
+  if (d.length < 11) return '';
+  return 'https://wa.me/' + d + (text ? '?text=' + encodeURIComponent(text) : '');
+}
+function waMsg(nos, buyer) {
+  const c = V.cfg, many = nos.length > 1;
+  return `Hi${buyer ? ' ' + buyer : ''}! Your ${c.eventName} pass${many ? 'es' : ''} (No. ${compress(nos)}) ${many ? 'are' : 'is'} confirmed.` +
+    (c.eventDate ? ` See you on ${c.eventDate}.` : '') + `\n\n${V.me.name}${c.org ? ', ' + c.org : ''}`;
+}
+
+function openAssign(nos) {
+  SH = { kind: 'assign', nos };
+  let h = sheetHead(nos ? `Give ${nos.length} pass${nos.length > 1 ? 'es' : ''}` : 'Add or give passes');
+  if (nos) h += `<p class="sub">${esc(compress(nos))}</p>`;
+  else h += `<p class="sub">New numbers are created. Existing unsold ones move to the person you pick.</p>
+    <label class="lbl" for="f_range">Pass numbers <i>e.g. 1001-1050, 1075, 1080-1090</i></label><input id="f_range" autocomplete="off">`;
+  h += `<label class="lbl" for="f_to">Give to</label><select id="f_to">${personOptions('')}</select>
+    <button class="primary" data-act="doassign">Give passes</button>`;
+  openSheet(h);
+}
+
+function openPerson(id) {
+  const t = id ? V.team.find(x => x.id === id) : null;
+  SH = { kind: 'person', pid: t ? t.id : 'U' + uid() };
+  let h = sheetHead(t ? esc(t.name) : 'Add person');
+  if (t) {
+    const ps = V.passes.filter(p => p.sid === t.id), st = statsFor(ps, settleOf(t.id));
+    h += `<p class="sub">${st.sold} of ${st.assigned} sold, ${rs(st.collect)} to hand over</p>`;
+  }
+  h += `<label class="lbl" for="f_name">Name</label><input id="f_name" autocomplete="off" value="${t ? esc(t.name) : ''}">
+    <label class="lbl" for="f_phone">Phone number <i>(used to log in)</i></label><input id="f_phone" type="tel" inputmode="numeric" autocomplete="off" value="${t ? esc(t.phone) : ''}">
+    <label class="lbl" for="f_pin">PIN <i>(4 to 6 digits)</i></label><input id="f_pin" inputmode="numeric" autocomplete="off" value="${t && t.pin ? esc(t.pin) : ''}">
+    <label class="lbl" for="f_role">Role</label><select id="f_role"><option value="seller">Seller: sees and sells own passes</option><option value="admin" ${t && t.role === 'admin' ? 'selected' : ''}>Organiser: sees everything, gives passes, records handovers</option></select>
+    ${t ? `<label class="check"><input type="checkbox" id="f_active" ${t.active ? 'checked' : ''}> Can log in</label>` : ''}
+    <button class="primary" data-act="saveperson">${t ? 'Save changes' : 'Add person'}</button>`;
+  if (t) {
+    const ps = V.passes.filter(p => p.sid === t.id), unsold = ps.filter(p => p.st !== 'sold');
+    h += `<div class="divd"></div><h3>Passes</h3><p class="sub">${ps.length ? esc(compress(ps.map(p => p.no))) : 'None yet'}</p>
+      <label class="lbl" for="f_range">Give more passes <i>e.g. 1001-1050</i></label><input id="f_range" autocomplete="off">
+      <button class="ghost" data-act="assignrange">Give these passes</button>
+      ${unsold.length ? `<button class="ghost danger" data-act="poolall">Take back ${unsold.length} unsold pass${unsold.length > 1 ? 'es' : ''}</button>` : ''}`;
+  }
+  openSheet(h);
+}
+
+function openSettings() {
+  SH = { kind: 'settings' };
+  const c = V.cfg;
+  openSheet(sheetHead('Event settings') + `
+    <label class="lbl" for="f_ev">Event name</label><input id="f_ev" value="${esc(c.eventName)}">
+    <label class="lbl" for="f_date">Event date <i>(shown in WhatsApp confirmations)</i></label><input id="f_date" value="${esc(c.eventDate || '')}">
+    <label class="lbl" for="f_price">Pass price</label><input id="f_price" type="number" inputmode="numeric" min="0" value="${c.price}">
+    <label class="lbl" for="f_org">Organised by</label><input id="f_org" value="${esc(c.org || '')}">
+    <button class="primary" data-act="savesettings">Save settings</button>`);
+}
+
+function openHandover(id) {
+  const t = V.team.find(x => x.id === id); if (!t) return;
+  const st = statsFor(V.passes.filter(p => p.sid === id), settleOf(id));
+  SH = { kind: 'handover', sid: id };
+  openSheet(sheetHead('Handover from ' + esc(first(t.name))) + `
+    <p class="sub">Cash ${rs(st.cash)} and Own UPI ${rs(st.own)} collected, ${rs(st.settled)} already handed over.</p>
+    <label class="lbl" for="f_hamt">Amount received</label><input id="f_hamt" type="number" inputmode="numeric" min="1" value="${st.collect > 0 ? st.collect : ''}">
+    <label class="lbl" for="f_hnote">Note <i>(optional)</i></label><input id="f_hnote" placeholder="e.g. Cash to Renu, UPI to club account" autocomplete="off">
+    <button class="primary" data-act="savehandover">Record handover</button>`);
+}
+
+/* ── Actions ─────────────────────────────────────────── */
+function doAssign(nos, sid) {
+  if (!nos.length) { toast('Enter pass numbers first', 'err'); return false; }
+  const moving = nos.filter(n => { const p = byNo(n); return p && p.st !== 'sold' && p.sid && p.sid !== sid; });
+  const sold = nos.filter(n => { const p = byNo(n); return p && p.st === 'sold' && p.sid !== sid; });
+  if (moving.length && !confirm(`${moving.length} of these passes are with someone else right now. Move them to ${sid ? nm(sid) : 'the pool'}?`)) return false;
+  enqueue({ type: 'assign', nos, sid });
+  const n = nos.length - sold.length;
+  toast(`${n} pass${n === 1 ? '' : 'es'} given to ${sid ? nm(sid) : 'the pool'}` + (sold.length ? `. ${sold.length} already sold, left as is` : ''));
+  return true;
+}
+
+const ACT = {
+  tab(a) { ui.tab = a.dataset.v; ui.selecting = false; ui.sel.clear(); ui.q = ''; ui.filter = ui.tab === 'passes' ? 'all' : 'unsold'; render(); scrollTo(0, 0); },
+  filter(a) { ui.filter = a.dataset.v; render(); },
+  selmode() { ui.selecting = !ui.selecting; ui.sel.clear(); if (ui.selecting && ui.filter === 'sold') ui.filter = isAdmin() ? 'all' : 'unsold'; render(); },
+  sellsel() { const nos = [...ui.sel]; if (nos.length) openSale(nos); },
+  assignsel() { const nos = [...ui.sel]; if (nos.length) openAssign(nos); },
+  openpass(a) { openSale([a.dataset.no]); },
+  addpasses() { openAssign(null); },
+  person(a) { openPerson(a.dataset.id); },
+  settings() { openSettings(); },
+  handover(a) { openHandover(a.dataset.id); },
+  unsettle(a) {
+    const s = V.settle.find(x => x.id === a.dataset.id);
+    if (s && confirm(`Delete the ${rs(s.amt)} handover from ${nm(s.sid)}?`)) enqueue({ type: 'unsettle', id: s.id });
+  },
+  export() { exportCSV(); },
+  retry() { pull(); render(); },
+  logout() {
+    if (S.queue.length && !confirm(`${S.queue.length} change${S.queue.length > 1 ? 's have' : ' has'} not reached the server yet and will be lost. Log out anyway?`)) return;
+    S = { session: null, server: null, v: null, queue: [] }; save(); V = null; closeSheet(); render();
+  }
+};
+
+const SACT = {
+  close() { closeSheet(); },
+  savesale() {
+    const amt = Number($('#f_amt').value);
+    if (!SH.mode) return toast('Choose how the payment was received', 'err');
+    if (!(amt >= 0) || $('#f_amt').value === '') return toast('Enter the amount', 'err');
+    const buyer = $('#f_buyer').value.trim(), phone = $('#f_bphone').value.replace(/[^\d+]/g, '');
+    const nos = SH.nos;
+    if (SH.sold) enqueue({ type: 'edit', no: nos[0], mode: SH.mode, amount: amt, buyer, phone });
+    else enqueue(nos.map(no => ({ type: 'sell', no, mode: SH.mode, amount: amt, buyer, phone })));
+    ui.sel.clear(); ui.selecting = false; render();
+    const wa = !SH.sold && waLink(phone);
+    if (wa) {
+      openSheet(`<div class="done"><div class="tick"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div>
+        <h2>${nos.length > 1 ? nos.length + ' passes sold' : 'Pass ' + esc(nos[0]) + ' sold'}</h2><p class="sub">${esc(SH.mode)}, ${rs(amt * nos.length)}</p></div>
+        <a class="primary wa" style="text-align:center;text-decoration:none" target="_blank" rel="noopener" href="${waLink(phone, waMsg(nos, buyer))}" data-act="close">Send confirmation on WhatsApp</a>
+        <button class="ghost" data-act="close">Done</button>`);
+    } else {
+      closeSheet();
+      toast(SH.sold ? 'Changes saved' : (nos.length > 1 ? nos.length + ' passes marked sold' : 'Pass ' + nos[0] + ' marked sold'));
+    }
+  },
+  unsell() {
+    const no = SH.nos[0];
+    if (!confirm(`Mark pass ${no} as unsold? The payment details will be cleared.`)) return;
+    enqueue({ type: 'unsell', no }); closeSheet(); toast('Pass ' + no + ' marked unsold');
+  },
+  assignone() { if (doAssign([SH.nos[0]], $('#f_to').value)) closeSheet(); },
+  removeone() {
+    const no = SH.nos[0];
+    if (!confirm(`Delete pass ${no} from the list? Use this only for numbers entered by mistake.`)) return;
+    enqueue({ type: 'remove', nos: [no] }); closeSheet(); toast('Pass ' + no + ' deleted');
+  },
+  doassign() {
+    let nos = SH.nos;
+    if (!nos) { try { nos = parseRange($('#f_range').value); } catch (e) { return toast(e.message, 'err'); } }
+    if (doAssign(nos, $('#f_to').value)) { ui.sel.clear(); ui.selecting = false; render(); closeSheet(); }
+  },
+  assignrange() {
+    let nos; try { nos = parseRange($('#f_range').value); } catch (e) { return toast(e.message, 'err'); }
+    if (doAssign(nos, SH.pid)) closeSheet();
+  },
+  poolall() {
+    const nos = V.passes.filter(p => p.sid === SH.pid && p.st !== 'sold').map(p => p.no);
+    if (!confirm(`Take back ${nos.length} unsold passes from ${nm(SH.pid)}? They go back to the pool.`)) return;
+    enqueue({ type: 'unassign', nos }); closeSheet(); toast(nos.length + ' passes back in the pool');
+  },
+  saveperson() {
+    const name = $('#f_name').value.trim(), phone = $('#f_phone').value.replace(/\D/g, '').slice(-10), pin = $('#f_pin').value.trim();
+    const role = $('#f_role').value, active = $('#f_active') ? $('#f_active').checked : true;
+    if (!name) return toast('Enter a name', 'err');
+    if (phone.length !== 10) return toast('Enter a 10-digit phone number', 'err');
+    if (!/^\d{4,6}$/.test(pin)) return toast('PIN must be 4 to 6 digits', 'err');
+    if (V.team.some(t => t.id !== SH.pid && t.phone === phone)) return toast('Another person already uses this phone number', 'err');
+    if (SH.pid === V.me.id && (role !== 'admin' || !active)) return toast('You cannot remove your own organiser access', 'err');
+    const isNew = !V.team.some(t => t.id === SH.pid);
+    enqueue({ type: 'seller', p: { id: SH.pid, name, phone, pin, role, active } });
+    closeSheet(); toast(isNew ? name + ' added. Share their phone and PIN with them.' : 'Saved');
+  },
+  savesettings() {
+    const cfg = { eventName: $('#f_ev').value.trim() || 'Safed Raas 2.0', eventDate: $('#f_date').value.trim(), price: Number($('#f_price').value) || 0, org: $('#f_org').value.trim() };
+    enqueue({ type: 'config', cfg }); closeSheet(); toast('Settings saved');
+  },
+  savehandover() {
+    const amt = Number($('#f_hamt').value);
+    if (!(amt > 0)) return toast('Enter the amount received', 'err');
+    enqueue({ type: 'settle', id: 'S' + uid(), sid: SH.sid, amt, note: $('#f_hnote').value.trim() });
+    closeSheet(); toast(rs(amt) + ' handover recorded');
+  }
+};
+
+function tapPass(no) {
+  const p = byNo(no); if (!p) return;
+  if (ui.selecting) {
+    if (p.st === 'sold') return toast('Pass ' + no + ' is already sold');
+    ui.sel.has(no) ? ui.sel.delete(no) : ui.sel.add(no);
+    render(); return;
+  }
+  openSale([no]);
+}
+
+function exportCSV() {
+  const rows = [['Pass No', 'With', 'Status', 'Mode', 'Amount', 'Buyer', 'Buyer Phone', 'Sold At', 'Updated By']]
+    .concat(V.passes.map(p => [p.no, p.sid ? nm(p.sid) : 'Pool', p.st, p.m, p.st === 'sold' ? p.a : '', p.b, p.bp, p.t ? new Date(p.t).toLocaleString('en-IN') : '', p.ub]));
+  const csv = rows.map(r => r.map(c => '"' + String(c ?? '').replace(/"/g, '""') + '"').join(',')).join('\r\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv' }));
+  a.download = (V.cfg.eventName || 'passes').replace(/[^\w]+/g, '-') + '-passes.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+function forceLogout(msg) {
+  S = { session: null, server: S.server ? { cfg: S.server.cfg } : null, v: null, queue: [] };
+  save(); V = null; closeSheet(); render();
+  toast(msg || 'Log in again', 'err', 5000);
+}
+
+let toastT = null;
+function toast(msg, kind, ms = 2800) {
+  const t = $('#toast');
+  t.textContent = msg; t.className = 'show' + (kind === 'err' ? ' err' : '');
+  clearTimeout(toastT); toastT = setTimeout(() => { t.className = kind === 'err' ? 'err' : ''; }, ms);
+}
+
+async function doLogin(e) {
+  e.preventDefault();
+  const phone = $('#l_phone').value.replace(/\D/g, '').slice(-10), pin = $('#l_pin').value.trim();
+  const msg = $('#l_msg'), btn = $('#l_btn');
+  if (!API) { msg.textContent = 'The app is not connected yet. Add the Apps Script URL to config.json.'; return; }
+  if (phone.length !== 10 || !pin) { msg.textContent = 'Enter your 10-digit phone number and PIN.'; return; }
+  btn.disabled = true; btn.textContent = 'Checking…'; msg.textContent = '';
+  try {
+    const r = await api('login', { auth: { phone, pin } });
+    if (r.ok) {
+      S = { session: { phone, pin, user: r.me }, server: null, v: null, queue: [] };
+      save(); ui.tab = null; V = null;
+      $('#app').innerHTML = ''; render();
+      await pull();
+      return;
+    }
+    msg.textContent = r.msg || 'Could not log in.';
+  } catch (err) { msg.textContent = 'Could not reach the server. Check your internet and try again.'; }
+  btn.disabled = false; btn.textContent = 'Log in';
+}
+
+/* ── Wiring ──────────────────────────────────────────── */
+const app = $('#app');
+app.addEventListener('click', e => {
+  const tk = e.target.closest('.tk');
+  if (tk) return tapPass(tk.dataset.no);
+  const a = e.target.closest('[data-act]');
+  if (a && ACT[a.dataset.act]) ACT[a.dataset.act](a);
+});
+app.addEventListener('input', e => { if (e.target.id === 'q') { ui.q = e.target.value; render(); } });
+app.addEventListener('change', e => { if (e.target.id === 'fseller') { ui.seller = e.target.value; render(); } });
+app.addEventListener('submit', e => { if (e.target.id === 'lform') doLogin(e); });
+
+$('#sheet').addEventListener('click', e => {
+  const m = e.target.closest('[data-mode]');
+  if (m) {
+    SH.mode = m.dataset.mode;
+    $('#sheet').querySelectorAll('.mode').forEach(b => { b.classList.toggle('on', b === m); b.setAttribute('aria-pressed', b === m); });
+    return;
+  }
+  const a = e.target.closest('[data-act]');
+  if (a && SACT[a.dataset.act]) SACT[a.dataset.act](a);
+});
+$('#scrim').addEventListener('click', closeSheet);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#sheet').hidden) closeSheet(); });
+
+async function boot() {
+  try { const r = await fetch('config.json', { cache: 'no-store' }); API = (await r.json()).apiUrl || ''; } catch (e) {}
+  if (API.includes('PASTE_')) API = '';
+  buildView(); render();
+  if (S.session && API) { pull(); if (S.queue.length) scheduleFlush(500); }
+  setInterval(poll, POLL_MS);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
+  addEventListener('online', () => { net.ok = true; setSync(); flush(); poll(); });
+  addEventListener('offline', setSync);
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+boot();
+</script>
+</body>
+</html>
